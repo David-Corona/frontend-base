@@ -70,7 +70,7 @@ export class AppSidebar implements OnInit, OnDestroy {
             ...val,
             activePath: path,
             overlayMenuActive: false,
-            staticMenuMobileActive: false,
+            staticMenuDesktopInactive: false,
             mobileMenuActive: false,
             menuHoverActive: false
         }));
@@ -83,7 +83,7 @@ export class AppSidebar implements OnInit, OnDestroy {
                     this.layoutService.layoutState.update((val) => ({
                         ...val,
                         overlayMenuActive: false,
-                        staticMenuMobileActive: false,
+                        staticMenuDesktopInactive: false,
                         mobileMenuActive: false,
                         menuHoverActive: false
                     }));

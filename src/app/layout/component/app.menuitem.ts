@@ -7,6 +7,7 @@ import { filter } from 'rxjs/operators';
 
 @Component({
     selector: '[app-menuitem]',
+    standalone: true,
     imports: [CommonModule, RouterModule, RippleModule],
     template: `
         @if (root() && isVisible()) {
@@ -47,7 +48,7 @@ import { filter } from 'rxjs/operators';
             </a>
         }
         @if (hasChildren() && isVisible() && (root() || isActive())) {
-            <ul [animate.enter]="initialized() ? 'p-submenu-enter' : null" [animate.leave]="'p-submenu-leave'" [class.layout-root-submenulist]="root()">
+            <ul [class.layout-root-submenulist]="root()">
                 @for (child of item().items; track child?.label) {
                     <li app-menuitem [item]="child" [parentPath]="fullPath()" [root]="false" [class]="child['badgeClass']"></li>
                 }
@@ -200,7 +201,7 @@ export class AppMenuitem {
             this.layoutService.layoutState.update((val) => ({
                 ...val,
                 overlayMenuActive: false,
-                staticMenuMobileActive: false,
+                staticMenuDesktopInactive: false,
                 mobileMenuActive: false,
                 menuHoverActive: false
             }));
