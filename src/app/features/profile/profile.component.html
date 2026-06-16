@@ -1,45 +1,158 @@
 <div class="p-6">
     <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mb-6">My Profile</div>
 
-    <p-card>
-        <div class="flex flex-col gap-6" [formGroup]="profileForm">
-            <!-- Name -->
-            <div class="flex flex-col gap-2">
-                <label for="name" class="font-semibold text-surface-900 dark:text-surface-0">Name</label>
-                @if (isEditing()) {
-                    <input pInputText id="name" formControlName="name" class="w-full md:w-96" placeholder="Your name" />
-                    @if (profileForm.get('name')?.invalid && profileForm.get('name')?.touched) {
-                        <small class="text-red-500">Name is required.</small>
-                    }
-                } @else {
-                    <span class="text-surface-700 dark:text-surface-200">{{ currentUser()?.name || '—' }}</span>
-                }
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Profile Info -->
+        <p-card>
+            <ng-template #header>
+                <div class="px-6 pt-6">
+                    <div class="flex items-center gap-3">
+                        <i class="pi pi-user text-xl text-primary"></i>
+                        <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">Profile Info</span>
+                    </div>
+                </div>
+            </ng-template>
 
-            <!-- Email -->
-            <div class="flex flex-col gap-2">
-                <label class="font-semibold text-surface-900 dark:text-surface-0">Email</label>
-                <span class="text-surface-700 dark:text-surface-200">{{ currentUser()?.email }}</span>
-            </div>
+            <div [formGroup]="profileForm">
+                <div class="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <!-- Name -->
+                    <div class="flex flex-col gap-2" [ngClass]="isEditing() ? 'col-span-2' : ''">
+                        <label for="name" class="font-semibold text-surface-900 dark:text-surface-0 text-sm">Name</label>
+                        @if (isEditing()) {
+                            <input pInputText id="name" formControlName="name" class="w-full" placeholder="Your name" />
+                            @if (profileForm.get('name')?.invalid && profileForm.get('name')?.touched) {
+                                <small class="text-red-500">Name is required.</small>
+                            }
+                        } @else {
+                            <span class="text-surface-700 dark:text-surface-200">{{ currentUser()?.name || '—' }}</span>
+                        }
+                    </div>
 
-            <!-- Role -->
-            <div class="flex flex-col gap-2">
-                <label class="font-semibold text-surface-900 dark:text-surface-0">Role</label>
-                <div>
-                    <p-tag [value]="currentUser()?.role?.name || '—'" styleClass="text-sm"></p-tag>
+                    <!-- Role -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0 text-sm">Role</label>
+                        <div>
+                            <p-tag [value]="currentUser()?.role?.name || '—'" styleClass="text-sm"></p-tag>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0 text-sm">Email</label>
+                        <span class="text-surface-700 dark:text-surface-200 break-all">{{ currentUser()?.email }}</span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0 text-sm">Status</label>
+                        <div class="flex gap-2 flex-wrap">
+                            @if (currentUser()?.isActive) {
+                                <p-tag value="Active" severity="success" styleClass="text-sm" />
+                            } @else {
+                                <p-tag value="Inactive" severity="secondary" styleClass="text-sm" />
+                            }
+                            @if (currentUser()?.isVerified) {
+                                <p-tag value="Verified" severity="info" styleClass="text-sm" />
+                            } @else {
+                                <p-tag value="Unverified" severity="warn" styleClass="text-sm" />
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <ng-template #footer>
-            <div class="flex gap-2">
-                @if (isEditing()) {
-                    <p-button label="Save" icon="pi pi-check" (onClick)="onSave()" [loading]="isSaving()" [disabled]="isSaving()"></p-button>
-                    <p-button label="Cancel" icon="pi pi-times" severity="secondary" (onClick)="onCancel()" [disabled]="isSaving()"></p-button>
-                } @else {
-                    <p-button label="Edit" icon="pi pi-pencil" (onClick)="startEditing()"></p-button>
-                }
-            </div>
-        </ng-template>
-    </p-card>
+            <ng-template #footer>
+                <div class="flex gap-2 pt-1">
+                    @if (isEditing()) {
+                        <p-button label="Save" icon="pi pi-check" (onClick)="onSave()" [loading]="isSaving()" [disabled]="isSaving()"></p-button>
+                        <p-button label="Cancel" icon="pi pi-times" severity="secondary" (onClick)="onCancel()" [disabled]="isSaving()"></p-button>
+                    } @else {
+                        <p-button label="Edit" icon="pi pi-pencil" (onClick)="startEditing()"></p-button>
+                    }
+                </div>
+            </ng-template>
+        </p-card>
+
+        <!-- Change Password -->
+        <p-card>
+            <ng-template #header>
+                <div class="px-6 pt-6">
+                    <div class="flex items-center gap-3">
+                        <i class="pi pi-lock text-xl text-primary"></i>
+                        <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">Change Password</span>
+                    </div>
+                </div>
+            </ng-template>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="flex flex-col gap-5">
+                <div class="flex flex-col gap-2">
+                    <label for="currentPassword" class="font-semibold text-surface-900 dark:text-surface-0">Current Password</label>
+                    <p-password id="currentPassword" formControlName="currentPassword" placeholder="Current password" [feedback]="false" [toggleMask]="true" styleClass="w-full" [fluid]="true" />
+                    @if (passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched) {
+                        <small class="text-red-500">Current password is required.</small>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="newPassword" class="font-semibold text-surface-900 dark:text-surface-0">New Password</label>
+                    <p-password id="newPassword" formControlName="newPassword" placeholder="New password" [toggleMask]="true" styleClass="w-full" [fluid]="true" />
+                    @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+                        <small class="text-red-500">
+                            @if (passwordForm.get('newPassword')?.errors?.['required']) {
+                                New password is required.
+                            } @else if (passwordForm.get('newPassword')?.errors?.['minlength']) {
+                                Must be at least 8 characters.
+                            } @else if (passwordForm.get('newPassword')?.errors?.['pattern']) {
+                                Must contain uppercase, lowercase, and a number.
+                            }
+                        </small>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="confirmPassword" class="font-semibold text-surface-900 dark:text-surface-0">Confirm New Password</label>
+                    <p-password id="confirmPassword" formControlName="confirmPassword" placeholder="Confirm new password" [feedback]="false" [toggleMask]="true" styleClass="w-full" [fluid]="true" />
+                    @if (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) {
+                        <small class="text-red-500">
+                            @if (passwordForm.get('confirmPassword')?.errors?.['required']) {
+                                Please confirm your new password.
+                            }
+                        </small>
+                    } @else if (passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched) {
+                        <small class="text-red-500">Passwords do not match.</small>
+                    }
+                </div>
+
+                <div>
+                    <p-button type="submit" label="Update Password" icon="pi pi-check" [loading]="isSavingPassword()" [disabled]="isSavingPassword()"></p-button>
+                </div>
+            </form>
+        </p-card>
+    </div>
+
+    <!-- Active Sessions -->
+    <div class="mt-6">
+        <p-card>
+            <ng-template #header>
+                <div class="px-6 pt-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="pi pi-shield text-xl text-primary"></i>
+                            <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">Active Sessions</span>
+                        </div>
+                        <p-button
+                            label="Terminate All Others"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            size="small"
+                            [outlined]="true"
+                            (onClick)="sessionTable.confirmTerminateAll()"
+                        />
+                    </div>
+                </div>
+            </ng-template>
+
+            <app-session-table #sessionTable />
+        </p-card>
+    </div>
 </div>

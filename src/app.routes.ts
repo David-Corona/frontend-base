@@ -11,7 +11,6 @@ export const appRoutes: Routes = [
         children: [
             { path: '', loadComponent: () => import('./app/features/dashboard/dashboard').then(m => m.Dashboard) },
             { path: 'profile', loadComponent: () => import('./app/features/profile/profile.component').then(m => m.ProfileComponent) },
-            { path: 'profile/security', loadComponent: () => import('./app/features/security/security.component').then(m => m.SecurityComponent) },
             {
                 path: 'admin',
                 canActivate: [adminGuard],

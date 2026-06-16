@@ -11,8 +11,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DialogModule } from 'primeng/dialog';
+import { PasswordModule } from 'primeng/password';
+import { RoleService } from '@shared/services/role.service';
 import type { User } from '@shared/models/user.models';
 import type { PaginatedResponse } from '@shared/models/api.models';
 
@@ -36,35 +39,41 @@ const mockResponse: PaginatedResponse<User> = {
 describe('UserListComponent', () => {
     let component: UserListComponent;
     let fixture: ComponentFixture<UserListComponent>;
-    let userServiceMock: { getUsers: jest.Mock; deactivateUser: jest.Mock; activateUser: jest.Mock };
+    let userServiceMock: { getUsers: jest.Mock; deactivateUser: jest.Mock; activateUser: jest.Mock; createUser: jest.Mock };
     let routerMock: { navigate: jest.Mock };
-    let messageServiceMock: { add: jest.Mock };
+    let roleServiceMock: { getRoles: jest.Mock };
+    let messageService: MessageService;
 
     beforeEach(() => {
         userServiceMock = {
             getUsers: jest.fn().mockReturnValue(of(mockResponse)),
             deactivateUser: jest.fn(),
-            activateUser: jest.fn()
+            activateUser: jest.fn(),
+            createUser: jest.fn().mockReturnValue(of(mockUser))
         };
         routerMock = { navigate: jest.fn() };
-        messageServiceMock = { add: jest.fn() };
+        roleServiceMock = { getRoles: jest.fn().mockReturnValue(of({ data: [], meta: { total: 0, page: 1, limit: 100, totalPages: 1 } })) };
 
         TestBed.configureTestingModule({
             imports: [
                 CommonModule,
                 FormsModule,
+                ReactiveFormsModule,
                 TableModule,
                 ButtonModule,
                 TagModule,
                 SelectModule,
                 InputTextModule,
                 ConfirmDialogModule,
+                DialogModule,
+                PasswordModule,
                 TooltipModule
             ],
             providers: [
                 { provide: UserService, useValue: userServiceMock },
+                { provide: RoleService, useValue: roleServiceMock },
                 { provide: Router, useValue: routerMock },
-                { provide: MessageService, useValue: messageServiceMock },
+                MessageService,
                 ConfirmationService
             ]
         }).overrideComponent(UserListComponent, {
@@ -72,12 +81,15 @@ describe('UserListComponent', () => {
                 imports: [
                     CommonModule,
                     FormsModule,
+                    ReactiveFormsModule,
                     TableModule,
                     ButtonModule,
                     TagModule,
                     SelectModule,
                     InputTextModule,
                     ConfirmDialogModule,
+                    DialogModule,
+                    PasswordModule,
                     TooltipModule
                 ],
                 providers: [ConfirmationService]
@@ -86,6 +98,7 @@ describe('UserListComponent', () => {
 
         fixture = TestBed.createComponent(UserListComponent);
         component = fixture.componentInstance;
+        messageService = TestBed.inject(MessageService);
         fixture.detectChanges();
     });
 
@@ -104,12 +117,75 @@ describe('UserListComponent', () => {
     });
 
     it('should show error toast on failed user load', () => {
+        const addSpy = jest.spyOn(messageService, 'add');
         userServiceMock.getUsers.mockReturnValue(throwError(() => new Error('Failed')));
         component.loadUsers();
-        expect(messageServiceMock.add).toHaveBeenCalledWith({
+        expect(addSpy).toHaveBeenCalledWith({
             severity: 'error',
             summary: 'Error',
             detail: 'Failed to load users.'
         });
+    });
+
+    it('should open create dialog', () => {
+        component.openCreateDialog();
+        expect(component.showCreateDialog()).toBe(true);
+        expect(component.createForm.pristine).toBe(true);
+    });
+
+    it('should close create dialog', () => {
+        component.openCreateDialog();
+        component.closeCreateDialog();
+        expect(component.showCreateDialog()).toBe(false);
+    });
+
+    it('should create user and refresh list on success', () => {
+        const addSpy = jest.spyOn(messageService, 'add');
+        component.openCreateDialog();
+        component.createForm.patchValue({
+            email: 'new@example.com',
+            password: 'Password123',
+            name: 'New User',
+            roleId: 'role-1'
+        });
+        component.submitCreate();
+        expect(userServiceMock.createUser).toHaveBeenCalledWith({
+            email: 'new@example.com',
+            password: 'Password123',
+            name: 'New User',
+            roleId: 'role-1'
+        });
+        expect(addSpy).toHaveBeenCalledWith({
+            severity: 'success',
+            summary: 'User Created',
+            detail: 'The new user has been created successfully.'
+        });
+        expect(component.showCreateDialog()).toBe(false);
+        expect(userServiceMock.getUsers).toHaveBeenCalled();
+    });
+
+    it('should show error toast on failed user creation', () => {
+        const addSpy = jest.spyOn(messageService, 'add');
+        userServiceMock.createUser.mockReturnValue(throwError(() => ({ message: 'Email already exists' } as ApiError)));
+        component.openCreateDialog();
+        component.createForm.patchValue({
+            email: 'new@example.com',
+            password: 'Password123'
+        });
+        component.submitCreate();
+        expect(addSpy).toHaveBeenCalledWith({
+            severity: 'error',
+            summary: 'Failed',
+            detail: 'Email already exists'
+        });
+        expect(component.isCreating()).toBe(false);
+    });
+
+    it('should not submit create when form is invalid', () => {
+        component.openCreateDialog();
+        component.createForm.patchValue({ email: 'invalid-email', password: '' });
+        component.submitCreate();
+        expect(userServiceMock.createUser).not.toHaveBeenCalled();
+        expect(component.createForm.touched).toBe(true);
     });
 });

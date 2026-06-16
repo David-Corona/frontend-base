@@ -1,10 +1,59 @@
 <div class="p-6">
     <div class="flex justify-between items-center mb-6">
         <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">Users</div>
-        <p-button label="New User" icon="pi pi-plus" severity="secondary" />
+        <p-button label="New User" icon="pi pi-plus" (onClick)="openCreateDialog()" />
     </div>
 
     <p-confirmDialog styleClass="w-96" />
+
+    <p-dialog [visible]="showCreateDialog()" (visibleChange)="showCreateDialog.set($event)" [style]="{ width: '500px' }" header="Create User" [modal]="true" [closable]="!isCreating()" (onHide)="closeCreateDialog()">
+        <ng-template #content>
+            <div class="flex flex-col gap-5" [formGroup]="createForm">
+                <div class="flex flex-col gap-2">
+                    <label for="name" class="font-semibold text-surface-900 dark:text-surface-0">Name</label>
+                    <input pInputText id="name" formControlName="name" placeholder="Full name" />
+                    @if (createForm.get('name')?.invalid && createForm.get('name')?.touched) {
+                        <small class="text-red-500">Name is too long.</small>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="email" class="font-semibold text-surface-900 dark:text-surface-0">Email <span class="text-red-500">*</span></label>
+                    <input pInputText id="email" formControlName="email" placeholder="user@example.com" />
+                    @if (createForm.get('email')?.invalid && createForm.get('email')?.touched) {
+                        <small class="text-red-500">A valid email is required.</small>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="password" class="font-semibold text-surface-900 dark:text-surface-0">Password <span class="text-red-500">*</span></label>
+                    <p-password id="password" formControlName="password" [toggleMask]="true" [feedback]="false" styleClass="w-full" [inputStyleClass]="'w-full'" />
+                    @if (createForm.get('password')?.invalid && createForm.get('password')?.touched) {
+                        <small class="text-red-500">Password must be at least 8 characters.</small>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="role" class="font-semibold text-surface-900 dark:text-surface-0">Role</label>
+                    <p-select
+                        id="role"
+                        [options]="roles()"
+                        formControlName="roleId"
+                        optionLabel="name"
+                        optionValue="id"
+                        placeholder="Select a role (default: user)"
+                        styleClass="w-full"
+                        [appendTo]="'body'"
+                    />
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancel" icon="pi pi-times" severity="secondary" text (onClick)="closeCreateDialog()" [disabled]="isCreating()" />
+            <p-button label="Create" icon="pi pi-check" (onClick)="submitCreate()" [loading]="isCreating()" [disabled]="isCreating()" />
+        </ng-template>
+    </p-dialog>
 
     <div class="card">
         <!-- Filters -->
@@ -85,7 +134,7 @@
                                 severity="info"
                                 size="small"
                                 [rounded]="true"
-                                [text]="true"
+                                [outlined]="true"
                                 (onClick)="viewUser(user)"
                                 pTooltip="View user"
                             />
@@ -95,7 +144,7 @@
                                     severity="danger"
                                     size="small"
                                     [rounded]="true"
-                                    [text]="true"
+                                    [outlined]="true"
                                     (onClick)="confirmDeactivate(user)"
                                     pTooltip="Deactivate user"
                                 />
@@ -105,7 +154,7 @@
                                     severity="success"
                                     size="small"
                                     [rounded]="true"
-                                    [text]="true"
+                                    [outlined]="true"
                                     (onClick)="confirmActivate(user)"
                                     pTooltip="Activate user"
                                 />

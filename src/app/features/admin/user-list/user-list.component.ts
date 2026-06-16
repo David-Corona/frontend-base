@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
@@ -9,10 +9,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { PasswordModule } from 'primeng/password';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { UserService } from '@shared/services/user.service';
+import { RoleService } from '@shared/services/role.service';
 import type { User } from '@shared/models/user.models';
+import type { Role } from '@shared/models/role.models';
 import type { ApiError } from '@shared/models/api.models';
 
 @Component({
@@ -21,6 +25,7 @@ import type { ApiError } from '@shared/models/api.models';
     imports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule,
         RouterModule,
         TableModule,
         ButtonModule,
@@ -28,6 +33,8 @@ import type { ApiError } from '@shared/models/api.models';
         SelectModule,
         TagModule,
         ConfirmDialogModule,
+        DialogModule,
+        PasswordModule,
         TooltipModule
     ],
     providers: [ConfirmationService],
@@ -36,9 +43,11 @@ import type { ApiError } from '@shared/models/api.models';
 })
 export class UserListComponent implements OnInit {
     private readonly userService = inject(UserService);
+    private readonly roleService = inject(RoleService);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly messageService = inject(MessageService);
     private readonly router = inject(Router);
+    private readonly fb = inject(FormBuilder);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly users = signal<User[]>([]);
@@ -46,6 +55,9 @@ export class UserListComponent implements OnInit {
     readonly totalRecords = signal(0);
     readonly currentPage = signal(1);
     readonly pageSize = signal(25);
+    readonly showCreateDialog = signal(false);
+    readonly isCreating = signal(false);
+    readonly roles = signal<Role[]>([]);
 
     statusFilter: string | null = 'active';
     nameFilter = '';
@@ -57,8 +69,82 @@ export class UserListComponent implements OnInit {
         { label: 'Inactive', value: 'inactive' }
     ];
 
+    readonly createForm = this.fb.group({
+        name: ['', [Validators.maxLength(255)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(8)]],
+        roleId: ['']
+    });
+
     ngOnInit(): void {
         this.loadUsers();
+        this.loadRoles();
+    }
+
+    private loadRoles(): void {
+        this.roleService.getRoles(1, 100).pipe(
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe({
+            next: (response) => {
+                this.roles.set(response.data);
+            },
+            error: () => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load roles.'
+                });
+            }
+        });
+    }
+
+    openCreateDialog(): void {
+        this.createForm.reset();
+        this.showCreateDialog.set(true);
+    }
+
+    closeCreateDialog(): void {
+        this.showCreateDialog.set(false);
+    }
+
+    submitCreate(): void {
+        if (this.createForm.invalid) {
+            this.createForm.markAllAsTouched();
+            return;
+        }
+
+        const raw = this.createForm.getRawValue();
+        const nameValue = raw.name?.trim() === '' ? null : raw.name?.trim() ?? null;
+        const roleIdValue = raw.roleId?.trim() || undefined;
+
+        this.isCreating.set(true);
+        this.userService.createUser({
+            email: raw.email!.trim(),
+            password: raw.password!,
+            name: nameValue,
+            roleId: roleIdValue
+        }).pipe(
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe({
+            next: () => {
+                this.isCreating.set(false);
+                this.showCreateDialog.set(false);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'User Created',
+                    detail: 'The new user has been created successfully.'
+                });
+                this.loadUsers(1);
+            },
+            error: (error: ApiError) => {
+                this.isCreating.set(false);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Failed',
+                    detail: error.message || 'Failed to create user.'
+                });
+            }
+        });
     }
 
     loadUsers(page = 1): void {

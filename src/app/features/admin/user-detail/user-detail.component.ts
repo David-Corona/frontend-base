@@ -54,6 +54,7 @@ export class UserDetailComponent implements OnInit {
     readonly isEditingName = signal(false);
     readonly isSavingName = signal(false);
     readonly isAssigningRole = signal(false);
+    readonly isChangingRole = signal(false);
 
     selectedRoleId: string | null = null;
 
@@ -128,6 +129,16 @@ export class UserDetailComponent implements OnInit {
         this.isEditingName.set(false);
     }
 
+    startChangeRole(): void {
+        this.selectedRoleId = this.user()!.role.id;
+        this.isChangingRole.set(true);
+    }
+
+    cancelChangeRole(): void {
+        this.isChangingRole.set(false);
+        this.selectedRoleId = this.user()!.role.id;
+    }
+
     saveName(): void {
         if (this.nameForm.invalid) {
             this.nameForm.markAllAsTouched();
@@ -176,6 +187,7 @@ export class UserDetailComponent implements OnInit {
             next: (updatedUser) => {
                 this.user.set(updatedUser);
                 this.isAssigningRole.set(false);
+                this.isChangingRole.set(false);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Role Assigned',

@@ -47,4 +47,8 @@ export class UserService {
     activateUser(id: string): Observable<User> {
         return this.http.patch<User>(`${this.baseUrl}/${id}/activate`, {});
     }
+
+    createUser(data: { email: string; password: string; name?: string | null; roleId?: string }): Observable<User> {
+        return this.http.post<User>(this.baseUrl, data);
+    }
 }

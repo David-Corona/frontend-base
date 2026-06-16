@@ -171,4 +171,29 @@ describe('UserService', () => {
             req.flush(activatedUser);
         });
     });
+
+    describe('createUser', () => {
+        it('should create a user with all fields', () => {
+            const newUser = { ...mockUser, email: 'new@example.com', name: 'New User' };
+
+            service.createUser({ email: 'new@example.com', password: 'Password123', name: 'New User', roleId: 'role-1' }).subscribe((user) => {
+                expect(user.email).toBe('new@example.com');
+                expect(user.name).toBe('New User');
+            });
+
+            const req = httpMock.expectOne('http://localhost:3000/api/users');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({ email: 'new@example.com', password: 'Password123', name: 'New User', roleId: 'role-1' });
+            req.flush(newUser);
+        });
+
+        it('should create a user with minimal fields', () => {
+            service.createUser({ email: 'new@example.com', password: 'Password123' }).subscribe();
+
+            const req = httpMock.expectOne('http://localhost:3000/api/users');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({ email: 'new@example.com', password: 'Password123' });
+            req.flush(mockUser);
+        });
+    });
 });

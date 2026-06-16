@@ -93,11 +93,6 @@ export class AppTopbar implements OnDestroy {
             routerLink: '/profile'
         },
         {
-            label: 'Security',
-            icon: 'pi pi-shield',
-            routerLink: '/profile/security'
-        },
-        {
             separator: true
         },
         {
