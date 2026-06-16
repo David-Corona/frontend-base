@@ -1,14 +1,17 @@
-import { Component, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, inject, OnDestroy, ViewChild } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
+import { Menu, MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '@/app/layout/service/layout.service';
+import { AuthService } from '@shared/services/auth.service';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
+    imports: [RouterModule, CommonModule, StyleClassModule, MenuModule, AppConfigurator],
     template: ` <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
@@ -57,14 +60,61 @@ import { LayoutService } from '@/app/layout/service/layout.service';
                 </div>
             </div>
 
-            <button type="button" class="layout-topbar-action">
-                <i class="pi pi-user"></i>
-            </button>
+            <div class="relative">
+                <p-menu #userMenu [model]="userMenuItems" [popup]="true" appendTo="body" (onShow)="onUserMenuShow()" />
+                <button type="button" class="layout-topbar-action" (click)="userMenu.toggle($event)">
+                    <i class="pi pi-user"></i>
+                </button>
+            </div>
         </div>
     </div>`
 })
-export class AppTopbar {
+export class AppTopbar implements OnDestroy {
+    @ViewChild('userMenu') userMenu!: Menu;
+
     layoutService = inject(LayoutService);
+    authService = inject(AuthService);
+    router = inject(Router);
+
+    private menuOverlay: HTMLElement | null = null;
+
+    onUserMenuShow() {
+        this.menuOverlay = document.body.querySelector('.p-menu.p-component');
+    }
+
+    ngOnDestroy() {
+        this.menuOverlay?.remove();
+    }
+
+    userMenuItems: MenuItem[] = [
+        {
+            label: 'My Profile',
+            icon: 'pi pi-user',
+            routerLink: '/profile'
+        },
+        {
+            label: 'Security',
+            icon: 'pi pi-shield',
+            routerLink: '/profile/security'
+        },
+        {
+            separator: true
+        },
+        {
+            label: 'Logout',
+            icon: 'pi pi-sign-out',
+            command: () => {
+                this.authService.logout().subscribe({
+                    next: () => {
+                        void this.router.navigate(['/auth/login']);
+                    },
+                    error: () => {
+                        void this.router.navigate(['/auth/login']);
+                    }
+                });
+            }
+        }
+    ];
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({

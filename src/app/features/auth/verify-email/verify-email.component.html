@@ -1,0 +1,24 @@
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
+    <div class="flex flex-col items-center justify-center">
+        <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
+            <div class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20" style="border-radius: 53px">
+                <div class="text-center mb-8">
+                    <div class="mb-8 w-16 h-16 shrink-0 mx-auto bg-primary rounded-full flex items-center justify-center">
+                        <i class="pi pi-envelope text-white text-3xl"></i>
+                    </div>
+                    <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Verify Email</div>
+                </div>
+
+                <div class="text-center">
+                    <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+                    <p class="text-muted-color mt-4">Verifying your email...</p>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <span class="text-muted-color">Already verified? </span>
+                    <a class="font-medium text-primary cursor-pointer" routerLink="/auth/login">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

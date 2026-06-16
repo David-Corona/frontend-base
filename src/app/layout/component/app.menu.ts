@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
+import { AuthService } from '@shared/services/auth.service';
 
 @Component({
     selector: 'app-menu',
@@ -19,6 +20,8 @@ import { AppMenuitem } from './app.menuitem';
     </ul> `,
 })
 export class AppMenu {
+    private readonly authService = inject(AuthService);
+
     model: MenuItem[] = [];
 
     ngOnInit() {
@@ -27,6 +30,17 @@ export class AppMenu {
                 label: 'Dashboard',
                 items: [
                     { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/'] }
+                ]
+            },
+            {
+                label: 'Administration',
+                items: [
+                    {
+                        label: 'Users',
+                        icon: 'pi pi-fw pi-users',
+                        routerLink: ['/admin/users'],
+                        visible: this.authService.hasAnyPermission('users:read', 'roles:read')
+                    }
                 ]
             },
             {
