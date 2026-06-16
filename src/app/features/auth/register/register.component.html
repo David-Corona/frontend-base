@@ -1,0 +1,57 @@
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
+    <div class="flex flex-col items-center justify-center">
+        <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
+            <div class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20" style="border-radius: 53px">
+                <div class="text-center mb-8">
+                    <div class="mb-8 w-16 h-16 shrink-0 mx-auto bg-primary rounded-full flex items-center justify-center">
+                        <i class="pi pi-user-plus text-white text-3xl"></i>
+                    </div>
+                    <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Create Account</div>
+                    <span class="text-muted-color font-medium">Sign up to get started</span>
+                </div>
+
+                @if (errorMessage()) {
+                    <div class="mb-4">
+                        <p-message severity="error" [text]="errorMessage()!"></p-message>
+                    </div>
+                }
+
+                <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+                    <div class="mb-6">
+                        <label for="email" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
+                        <input pInputText id="email" type="email" placeholder="Email address" class="w-full md:w-120" formControlName="email" />
+                        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+                            <small class="block text-red-500 mt-1">Valid email is required.</small>
+                        }
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="password" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Password</label>
+                        <p-password id="password" formControlName="password" placeholder="Password" [toggleMask]="true" styleClass="mb-2" [fluid]="true" [feedback]="true"></p-password>
+                        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+                            <small class="block text-red-500 mt-1">Password must be at least 8 characters.</small>
+                        }
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="confirmPassword" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Confirm Password</label>
+                        <p-password id="confirmPassword" formControlName="confirmPassword" placeholder="Confirm Password" [toggleMask]="true" styleClass="mb-2" [fluid]="true" [feedback]="false"></p-password>
+                        @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
+                            <small class="block text-red-500 mt-1">Please confirm your password.</small>
+                        }
+                        @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
+                            <small class="block text-red-500 mt-1">Passwords do not match.</small>
+                        }
+                    </div>
+
+                    <p-button type="submit" label="Sign Up" styleClass="w-full" [loading]="isLoading()" [disabled]="isLoading()"></p-button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <span class="text-muted-color">Already have an account? </span>
+                    <a class="font-medium text-primary cursor-pointer" routerLink="/auth/login">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

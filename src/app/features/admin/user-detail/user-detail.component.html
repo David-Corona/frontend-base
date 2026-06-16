@@ -1,0 +1,156 @@
+<div class="p-6">
+    <div class="flex items-center gap-3 mb-6">
+        <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" (onClick)="goBack()" />
+        <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">User Detail</div>
+    </div>
+
+    <p-confirmDialog styleClass="w-96" />
+
+    @if (isLoading()) {
+        <div class="flex justify-center py-12">
+            <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+        </div>
+    } @else if (user()) {
+        <div class="flex flex-col gap-6 max-w-2xl">
+            <!-- User Info -->
+            <p-card>
+                <ng-template #header>
+                    <div class="px-6 pt-6">
+                        <div class="flex items-center gap-3">
+                            <i class="pi pi-user text-xl text-primary"></i>
+                            <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">User Information</span>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <div class="flex flex-col gap-5">
+                    <!-- Email (read-only) -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Email</label>
+                        <span class="text-surface-700 dark:text-surface-200">{{ user()!.email }}</span>
+                    </div>
+
+                    <!-- Name (editable) -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Name</label>
+                        @if (isEditingName()) {
+                            <div class="flex items-center gap-2" [formGroup]="nameForm">
+                                <input pInputText formControlName="name" class="flex-1" placeholder="Name" />
+                                <p-button icon="pi pi-check" size="small" (onClick)="saveName()" [loading]="isSavingName()" [disabled]="isSavingName()" />
+                                <p-button icon="pi pi-times" severity="secondary" size="small" (onClick)="cancelEditName()" [disabled]="isSavingName()" />
+                            </div>
+                            @if (nameForm.get('name')?.invalid && nameForm.get('name')?.touched) {
+                                <small class="text-red-500">Name is required.</small>
+                            }
+                        } @else {
+                            <div class="flex items-center gap-2">
+                                <span class="text-surface-700 dark:text-surface-200">{{ user()!.name || '—' }}</span>
+                                <p-button icon="pi pi-pencil" severity="secondary" size="small" [text]="true" (onClick)="startEditName()" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Status</label>
+                        <p-tag
+                            [value]="user()!.isActive ? 'Active' : 'Inactive'"
+                            [severity]="user()!.isActive ? 'success' : 'danger'"
+                        />
+                    </div>
+
+                    <!-- Verified -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Email Verified</label>
+                        <p-tag
+                            [value]="user()!.isVerified ? 'Yes' : 'No'"
+                            [severity]="user()!.isVerified ? 'success' : 'warn'"
+                        />
+                    </div>
+
+                    <!-- Created -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Created</label>
+                        <span class="text-surface-700 dark:text-surface-200">{{ user()!.createdAt | date:'medium' }}</span>
+                    </div>
+                </div>
+            </p-card>
+
+            <!-- Role Assignment -->
+            <p-card>
+                <ng-template #header>
+                    <div class="px-6 pt-6">
+                        <div class="flex items-center gap-3">
+                            <i class="pi pi-shield text-xl text-primary"></i>
+                            <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">Role</span>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Current Role</label>
+                        <div class="flex items-center gap-2">
+                            <p-tag [value]="user()!.role.name" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">Assign New Role</label>
+                        <div class="flex items-center gap-2">
+                            <p-select
+                                [options]="roles()"
+                                [(ngModel)]="selectedRoleId"
+                                optionLabel="name"
+                                optionValue="id"
+                                placeholder="Select a role"
+                                styleClass="w-64"
+                                [disabled]="!hasRolesPermission()"
+                            />
+                            <p-button
+                                label="Assign"
+                                icon="pi pi-check"
+                                (onClick)="assignRole()"
+                                [loading]="isAssigningRole()"
+                                [disabled]="isAssigningRole() || !selectedRoleId || selectedRoleId === user()!.role.id"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </p-card>
+
+            <!-- Actions -->
+            <p-card>
+                <ng-template #header>
+                    <div class="px-6 pt-6">
+                        <div class="flex items-center gap-3">
+                            <i class="pi pi-cog text-xl text-primary"></i>
+                            <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">Actions</span>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <div class="flex gap-2">
+                    @if (user()!.isActive) {
+                        <p-button
+                            label="Deactivate User"
+                            icon="pi pi-ban"
+                            severity="danger"
+                            [outlined]="true"
+                            (onClick)="confirmDeactivate()"
+                            [disabled]="!hasDeletePermission()"
+                        />
+                    } @else {
+                        <p-button
+                            label="Activate User"
+                            icon="pi pi-check-circle"
+                            severity="success"
+                            [outlined]="true"
+                            (onClick)="confirmActivate()"
+                        />
+                    }
+                </div>
+            </p-card>
+        </div>
+    }
+</div>

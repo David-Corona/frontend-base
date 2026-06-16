@@ -1,0 +1,77 @@
+<p-confirmDialog styleClass="w-96" />
+
+<p-table
+    [value]="sessions()"
+    [loading]="isLoading()"
+    [tableStyle]="{ 'min-width': '40rem' }"
+    [paginator]="false"
+>
+    <ng-template #header>
+        <tr>
+            <th>Device</th>
+            <th>IP Address</th>
+            <th>Created</th>
+            <th>Expires</th>
+            <th style="width: 10rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-session>
+        <tr [class.bg-primary-50]="session.isCurrent">
+            <td>
+                <div class="flex items-center gap-2">
+                    <i class="pi" [ngClass]="getBrowserIcon(session.userAgent)"></i>
+                    <div>
+                        <div class="font-medium">{{ getBrowserName(session.userAgent) }}</div>
+                        <div class="text-sm text-muted-color">{{ getOsName(session.userAgent) }}</div>
+                    </div>
+                    @if (session.isCurrent) {
+                        <p-tag value="Current" severity="success" styleClass="text-xs ml-2" />
+                    }
+                </div>
+            </td>
+            <td>{{ session.ip || '—' }}</td>
+            <td>{{ session.createdAt | date:'medium' }}</td>
+            <td>{{ session.expiresAt | date:'medium' }}</td>
+            <td>
+                @if (!session.isCurrent) {
+                    <p-button
+                         icon="pi pi-trash"
+                         severity="danger"
+                         size="small"
+                         [rounded]="true"
+                         [text]="true"
+                         (onClick)="confirmTerminate(session)"
+                         pTooltip="Terminate this session"
+                     />
+                }
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+        <tr>
+            <td colspan="5" class="text-center py-6 text-muted-color">
+                <i class="pi pi-shield text-3xl mb-3 block"></i>
+                No active sessions found.
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+@if (totalRecords() > pageSize()) {
+    <div class="flex justify-between items-center mt-4">
+        <span class="text-sm text-muted-color">
+            Showing {{ (currentPage() - 1) * pageSize() + 1 }}-{{ Math.min(currentPage() * pageSize(), totalRecords()) }} of {{ totalRecords() }}
+        </span>
+        <div class="flex gap-1">
+            @for (page of getPages(); track page) {
+                <p-button
+                    [label]="page.toString()"
+                    [severity]="page === currentPage() ? undefined : 'secondary'"
+                    [text]="page !== currentPage()"
+                    size="small"
+                    (onClick)="goToPage(page)"
+                />
+            }
+        </div>
+    </div>
+}
